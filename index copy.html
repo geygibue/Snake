@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+</head>
+
+<body>
+  <canvas id="vaszon" width="300" height="300"></canvas>
+
+  <script>
+      confetti({
+        particleCount: 500,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+
+    var tabla = [
+      "###############",
+      "#             #",
+      "#             #",
+      "#             #",
+      "#             #",
+      "#             #",
+      "#             #",
+      "#    #####    #",
+      "#    #####    #",
+      "#             #",
+      "#             #",
+      "#             #",
+      "#             #",
+      "#             #",
+      "###############",
+    ];
+
+      var vaszon = document.getElementById("vaszon");
+      var ctx = vaszon.getContext("2d");
+
+      var aktualisYoffset = 0;
+      var negyzetMeret = 20;
+
+      tabla.forEach(
+        function sorellenorzes(sor) {
+          sor = sor.split("");
+          var aktualisXoffset = 0;
+          
+          sor.forEach(
+            function karakterEllenorzes(karakter) {
+              if(karakter == "#") {
+                ctx.fillStyle = "black";
+                ctx.fillRect(aktualisXoffset, aktualisYoffset, negyzetMeret, negyzetMeret);
+              }
+              aktualisXoffset += negyzetMeret;
+            }
+          );
+          aktualisYoffset += negyzetMeret
+        }
+      );
+
+  </script>
+
+</body>
+</html>

@@ -3,81 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Snake</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
 </head>
+
 <body>
   <canvas id="canvas" width="300" height="300"></canvas>
-  <input type="button" onclick="rajzol()" value="Rajzol"/>
-  <input type="button" onclick="torol()" value="Töröl"/>
+
   <script>
-    var canvas = document.getElementById("canvas");
-    console.log(canvas);
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "blue";
-    ctx.fillRect(0, 0, 30, 30);
-    ctx.clearRect(0, 0, 300, 300);
-
-    function rajzol () {
-      ctx.fillRect(0, 0, 30, 30);
+    function gombNyomas(gombErtek) {
+      var gomb = gombErtek.key.toUpperCase();
+      console.log(gomb, kigyo.irany)
+      if (gomb === "W" && kigyo.irany !=="S") kigyo.irany = "N";
+      if (gomb === "S" && kigyo.irany !=="N") kigyo.irany = "S";
+      if (gomb === "A" && kigyo.irany !=="E") kigyo.irany = "W";
+      if (gomb === "D" && kigyo.irany !=="W") kigyo.irany = "E";
+      console.log(kigyo.irany)
     }
 
-    function torol () {
-      ctx.clearRect(0, 0, 300, 300);
-    }
+    window.addEventListener("keypress", gombNyomas, false);
 
-    var luckyCatClub = ["Rubi", "Markus", "Grace", "Rusty", "Kaki", "Maki", "Laci", "Maci", "Paci", "Faszi"];
-    
-    function nevMegjelenites(nev) {
-      console.log(nev)
-    }
-    
-    // for (var i = 0; i < lakyCatClub.length; i++) {
-    //   nevMegjelenites(lakyCatClub[i])
-    // }
-    
-    // luckyCatClub.forEach(nevMegjelenites)
+    confetti({
+      particleCount: 500,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
 
-    var tabla = [
-      "###############",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "#             #",
-      "###############",
-    ];
+    var jatek = {
+      tabla: [
+        "###############",
+        "#             #",
+        "#             #",
+        "#             #",
+        "#             #",
+        "#             #",
+        "#    #####    #",
+        "#    #####    #",
+        "#    #####    #",
+        "#             #",
+        "#             #",
+        "#             #",
+        "#             #",
+        "#             #",
+        "###############",
+      ],
+      tickSzama: 0,
+      idozito: null,
+      tick: function() {
+        kigyo.mozgas();
+        grafika.jatekMegrajzolas();
+        jatek.tickSzama++;
+        console.log(jatek.tickSzama);
+        jatek.idozito = window.setTimeout(jatek.tick, 500);
+      },
+    };
 
-    var canvasWidth = canvas.width;
-    var canvasHeight = canvas.height;
-
-    const tablaHeight = tabla.length;
-    const elemHeight = Math.floor(canvasHeight / tablaHeight);
-
-    tabla.forEach((sor, y) => {
-      const elemek = sor.split("")
-      const tablaWidth = elemek.length;
-
-      elemWidth = Math.floor(canvasWidth / tablaWidth);
-
-      elemek.forEach((elem, x) => {
-        if (elem === "#") {
-          ctx.fillStyle = "black"
-          ctx.fillRect(x * elemWidth, y * elemHeight, elemWidth, elemHeight);
+    var grafika = {
+      canvas: document.getElementById("canvas"),
+      negyzetMeret: 20,
+      tablaMegrajzolas: function(ctx) {
+        var aktualisYoffset = 0;
+        jatek.tabla.forEach(
+        function sorellenorzes(sor) {
+          sor = sor.split("");
+          var aktualisXoffset = 0;
+          
+          sor.forEach(
+            function karakterEllenorzes(karakter) {
+              if(karakter == "#") {
+                ctx.fillStyle = "black";
+                ctx.fillRect(aktualisXoffset, aktualisYoffset, grafika.negyzetMeret, grafika.negyzetMeret);
+              }
+              aktualisXoffset += grafika.negyzetMeret;
+            }
+          );
+          aktualisYoffset += grafika.negyzetMeret
         }
-        if (elem === "@") {
-          ctx.fillStyle = "pink"
-          ctx.fillRect(x * elemWidth, y * elemHeight, elemWidth, elemHeight);
-        }
-      })
-    })
+      )},
+      kigyoMegrajzolas: function(ctx) {
+        kigyo.reszek.forEach(function reszMegrajzolás(resz) {
+          var reszXhelye = resz.x * grafika.negyzetMeret;
+          var reszYhelye = resz.y * grafika.negyzetMeret;
+          ctx.fillStyle = "green";
+          ctx.fillRect(reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
+        }) 
+      },
+      jatekMegrajzolas: function () {
+        var ctx = grafika.canvas.getContext("2d");
+        ctx.clearRect(0, 0, grafika.canvas.width, grafika.canvas.height)
+        grafika.tablaMegrajzolas(ctx);
+        grafika.kigyoMegrajzolas(ctx);
+      }
+    }
 
+    var kigyo = {
+      reszek: [
+        {x: 4, y: 2},
+        {x: 3, y: 2},
+        {x: 2, y: 2},
+      ],
+      irany:"E",
+      kovetkezoHely: function() {
+        var kigyoFej = kigyo.reszek[0];
+        var celX = kigyoFej.x;
+        var celY = kigyoFej.y;
+        
+        if (kigyo.irany === "N") celY--;
+        if (kigyo.irany === "S") celY++;
+        if (kigyo.irany === "W") celX--;
+        if (kigyo.irany === "E") celX++;
+
+        return {
+          x: celX,
+          y: celY,
+        }
+      },
+      mozgas: function() {
+        var hely = kigyo.kovetkezoHely();
+        kigyo.reszek.unshift(hely);
+        kigyo.reszek.pop();
+      },
+    }
+
+    var jatekIranyitas = {
+      jatekInditas: function() {
+        jatek.tick();
+      }
+    }
+
+    jatekIranyitas.jatekInditas();
   </script>
+
 </body>
 </html>
