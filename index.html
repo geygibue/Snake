@@ -11,20 +11,9 @@
   <canvas id="canvas" width="300" height="300"></canvas>
 
   <script>
-    function gombNyomas(gombErtek) {
-      var gomb = gombErtek.key.toUpperCase();
-      console.log(gomb, kigyo.irany)
-      if (gomb === "W" && kigyo.irany !=="S") kigyo.irany = "N";
-      if (gomb === "S" && kigyo.irany !=="N") kigyo.irany = "S";
-      if (gomb === "A" && kigyo.irany !=="E") kigyo.irany = "W";
-      if (gomb === "D" && kigyo.irany !=="W") kigyo.irany = "E";
-      console.log(kigyo.irany)
-    }
-
-    window.addEventListener("keypress", gombNyomas, false);
 
     confetti({
-      particleCount: 500,
+      particleCount: 1000,
       spread: 70,
       origin: { y: 0.6 },
     });
@@ -47,10 +36,20 @@
         "#             #",
         "###############",
       ],
+      gyumik: [
+        {x: 1, y: 1},
+        {x: 13, y: 13},
+        {x: 1, y: 13},
+      ],
       tickSzama: 0,
       idozito: null,
       tick: function() {
-        kigyo.mozgas();
+        window.clearTimeout(jatek.idozito)
+        var eredmeny = kigyo.mozgas();
+        if (eredmeny === "gameover") {
+          alert("megdögöltél!");
+          return
+        }
         grafika.jatekMegrajzolas();
         jatek.tickSzama++;
         console.log(jatek.tickSzama);
@@ -88,12 +87,21 @@
           ctx.fillRect(reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
         }) 
       },
+      gyumiMegrajzolas: function (ctx) {
+        jatek.gyumik.forEach(function reszMegrajzolás(resz) {
+          var reszXhelye = resz.x * grafika.negyzetMeret;
+          var reszYhelye = resz.y * grafika.negyzetMeret;
+          ctx.fillStyle = "red";
+          ctx.fillRect(reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
+        }) 
+      },
       jatekMegrajzolas: function () {
         var ctx = grafika.canvas.getContext("2d");
         ctx.clearRect(0, 0, grafika.canvas.width, grafika.canvas.height)
         grafika.tablaMegrajzolas(ctx);
+        grafika.gyumiMegrajzolas(ctx);
         grafika.kigyoMegrajzolas(ctx);
-      }
+      },
     }
 
     var kigyo = {
@@ -116,18 +124,39 @@
         return {
           x: celX,
           y: celY,
-        }
+        };
       },
       mozgas: function() {
         var hely = kigyo.kovetkezoHely();
-        kigyo.reszek.unshift(hely);
-        kigyo.reszek.pop();
+        if (kigyo.uresNegyzet(hely)) {
+          kigyo.reszek.unshift(hely);
+          kigyo.reszek.pop();
+        }
+        if (kigyo.falNegyzet(hely)) {
+          return "gameover"
+        }
+      },
+      uresNegyzet: function(hely) {
+        var tartalom = jatek.tabla[hely.y][hely.x]
+        return tartalom === " ";
+      },
+      falNegyzet: function(hely) {
+        var tartalom = jatek.tabla[hely.y][hely.x]
+        return tartalom === "#";
       },
     }
 
     var jatekIranyitas = {
       jatekInditas: function() {
+        window.addEventListener("keypress", jatekIranyitas.gombNyomas, false);
         jatek.tick();
+      },
+      gombNyomas: function (gombErtek) {
+        var gomb = gombErtek.key.toUpperCase();
+        if (gomb === "W" && kigyo.irany !=="S") kigyo.irany = "N";
+        if (gomb === "S" && kigyo.irany !=="N") kigyo.irany = "S";
+        if (gomb === "A" && kigyo.irany !=="E") kigyo.irany = "W";
+        if (gomb === "D" && kigyo.irany !=="W") kigyo.irany = "E";
       }
     }
 
