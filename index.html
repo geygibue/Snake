@@ -5,12 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snake</title>
     <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+    <style>
+      img, audio {
+        display: none;
+      }
+    </style>
   </head>
 
   <body>
+    <img id="snakeHead" src="./assets/snake_head.png" alt="snake head" />
+    <img id="snakeBody" src="./assets/snake_body.png" alt="snake body" />
+    <img id="food" src="./assets/food.png" alt="food" />
+    <img id="wall" src="./assets/wall.png" alt="wall" />
+    <audio id="chew">
+      <source src="./assets/chew.mp3" type="audio/ogg">
+    </audio>
     <canvas id="canvas" width="300" height="300"></canvas>
 
     <script>
+      const snakeHead = document.getElementById("snakeHead");
+      const snakeBody = document.getElementById("snakeBody");
+      const food = document.getElementById("food");
+      const wall = document.getElementById("wall");
+      const chew = document.getElementById("chew");
 
       confetti({
         particleCount: 1000,
@@ -97,6 +114,7 @@
         ],
         pontSzam: 0,
         tickSzama: 0,
+        fut: true,
         idozito: null,
         veletlenGyumolcsHozzaadas: function() {
           var randomY = Math.floor(Math.random() * (jatek.tabla[jatek.tablaSzama].length - 2)) + 1;
@@ -106,14 +124,14 @@
           jatek.gyumik.push(randomHely);
         },
         tick: function() {
-          window.clearTimeout(jatek.idozito)
-          var eredmeny = kigyo.mozgas();
-          if (eredmeny === "gameover") {
-            alert("megdögöltél!");
-            return
-          }
+          window.clearTimeout(jatek.idozito);
+          console.log(jatek.fut);
+          kigyo.mozgas();
           jatek.tablaSzama = (jatek.tablaSzama + 1) % jatek.tabla.length
           grafika.jatekMegrajzolas();
+          if (!jatek.fut) {
+            return
+          }
           jatek.tickSzama++;
           jatek.idozito = window.setTimeout(jatek.tick, 500);
         },
@@ -132,8 +150,7 @@
             sor.forEach(
               function karakterEllenorzes(karakter) {
                 if(karakter == "#") {
-                  ctx.fillStyle = "black";
-                  ctx.fillRect(aktualisXoffset, aktualisYoffset, grafika.negyzetMeret, grafika.negyzetMeret);
+                  ctx.drawImage(wall,aktualisXoffset, aktualisYoffset, grafika.negyzetMeret, grafika.negyzetMeret);
                 }
                 aktualisXoffset += grafika.negyzetMeret;
               }
@@ -142,19 +159,19 @@
           }
         )},
         kigyoMegrajzolas: function(ctx) {
+          var head = kigyo.reszek[0];
           kigyo.reszek.forEach(function reszMegrajzolás(resz) {
             var reszXhelye = resz.x * grafika.negyzetMeret;
             var reszYhelye = resz.y * grafika.negyzetMeret;
-            ctx.fillStyle = "green";
-            ctx.fillRect(reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
-          }) 
+            ctx.drawImage(snakeBody, reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
+          });
+          ctx.drawImage(snakeHead, head.x * grafika.negyzetMeret, head.y * grafika.negyzetMeret, grafika.negyzetMeret, grafika.negyzetMeret);
         },
         gyumiMegrajzolas: function (ctx) {
           jatek.gyumik.forEach(function reszMegrajzolás(resz) {
             var reszXhelye = resz.x * grafika.negyzetMeret;
             var reszYhelye = resz.y * grafika.negyzetMeret;
-            ctx.fillStyle = "red";
-            ctx.fillRect(reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
+            ctx.drawImage(food, reszXhelye, reszYhelye, grafika.negyzetMeret, grafika.negyzetMeret);
           }) 
         },
         jatekMegrajzolas: function () {
@@ -163,6 +180,14 @@
           grafika.tablaMegrajzolas(ctx, 0);
           grafika.gyumiMegrajzolas(ctx);
           grafika.kigyoMegrajzolas(ctx);
+          ctx.font = "15px Arial";
+          ctx.fillStyle = "black"
+          ctx.fillText("Score: " + jatek.pontSzam, 5, 15);
+          if (!jatek.fut) {
+            ctx.font = "30px Arial";
+            ctx.fillStyle = "red"
+            ctx.fillText("Vége!", 100, 150);
+          }
         },
       }
 
@@ -195,13 +220,17 @@
             kigyo.reszek.pop();
           }
           if (kigyo.falNegyzet(hely)) {
-            return "gameover"
+            jatek.fut = false;
           }
           if (kigyo.gyumolcsNegyzet(hely)) {
             kigyo.reszek.unshift(hely);
             jatek.pontSzam++;
             jatek.veletlenGyumolcsHozzaadas();
             console.log(jatek.pontSzam);
+          }
+          if (kigyo.kigyoNegyzet(hely)) {
+            // jatek.fut = false;
+            console.log("fej!test")
           }
         },
         uresNegyzet: function(hely) {
@@ -214,15 +243,22 @@
         },
         gyumolcsNegyzet: function(hely) {
           for (var gyumolcsSzama = 0; gyumolcsSzama < jatek.gyumik.length; gyumolcsSzama++) {
-            console.log('gyumolcsSzama', gyumolcsSzama, jatek.gyumik.length);
+            // console.log('gyumolcsSzama', gyumolcsSzama, jatek.gyumik.length);
             if (jatek.gyumik[gyumolcsSzama].x === hely.x &&
             jatek.gyumik[gyumolcsSzama].y === hely.y) {
               jatek.gyumik.splice(gyumolcsSzama, 1);
               return true;
+              chew.play();
             }
           }
           return false;
         },
+        kigyoNegyzet: function(hely) {
+          var fej = kigyo.reszek[0];
+          for (var reszSzam = 1; reszSzam < kigyo.reszek.length; reszSzam++) {
+            return kigyo.reszek[reszSzam].x === fej.x && kigyo.reszek[reszSzam].y === fej.y
+          }
+        }
       }
 
       var jatekIranyitas = {
